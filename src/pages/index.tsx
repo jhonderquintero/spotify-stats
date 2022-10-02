@@ -1,10 +1,10 @@
-import type { NextPage } from 'next';
-import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
-import styled from 'styled-components';
+import Head from 'next/head';
 import img from '../../public/assets/images/spotify-home.png';
+import styled from 'styled-components';
+import type { NextPage } from 'next';
 
 interface IHomeProps {
   clientId: string;

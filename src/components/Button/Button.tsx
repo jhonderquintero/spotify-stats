@@ -1,5 +1,5 @@
 import React from 'react';
-import '../stories/button.css';
+import './button.css';
 
 interface ButtonProps {
   /**

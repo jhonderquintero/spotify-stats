@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const fetchAccesToken = async (redirectUri: string, spotifyCode: string) => {
+const fetchAccesToken = async (refreshToken: string) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
@@ -11,9 +11,8 @@ const fetchAccesToken = async (redirectUri: string, spotifyCode: string) => {
         'Basic ' + new Buffer(clientId + ':' + clientSecret).toString('base64'),
     },
     body: new URLSearchParams({
-      code: spotifyCode,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
     }),
     json: true,
   };
@@ -31,7 +30,7 @@ const fetchAccesToken = async (redirectUri: string, spotifyCode: string) => {
 interface FetchAccesTokenDTO {
   key: string;
   expiresIn: number;
-  refreshToken: string;
+  refreshToken?: string;
   scope: string;
   tokenType: string;
 }
@@ -40,15 +39,14 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<FetchAccesTokenDTO>
 ) {
-  const { redirectUri, spotifyCode } = JSON.parse(req.body);
+  const { refreshToken } = JSON.parse(req.body);
 
   const {
     access_token: accesToken,
     expires_in: expiresIn,
-    refresh_token: refreshToken,
     scope,
     token_type: tokenType,
-  } = await fetchAccesToken(redirectUri, spotifyCode);
+  } = await fetchAccesToken(refreshToken);
 
   res.status(200).json({
     key: accesToken,

@@ -3,6 +3,8 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
+import styled from 'styled-components';
+import img from '../../public/assets/images/spotify-home.png';
 
 interface IHomeProps {
   clientId: string;
@@ -13,17 +15,24 @@ const spotifyDefault = {
   authEndpoint: 'https://accounts.spotify.com/authorize',
   redirectUri: 'http://localhost:3000',
   responseType: 'code',
-  scope: 'user-read-private user-read-email user-read-playback-state ',
+  scope: 'user-read-private user-read-email user-read-playback-state',
   showDialog: 'true',
 };
 
-const Home: NextPage<IHomeProps> = ({ clientId, clientSecret }) => {
+const HomepageContainer = styled.div`
+  background-image: url(${img.src});
+  width: 100vw;
+  height: 100vh;
+  color: white;
+`;
+
+const Home: NextPage<IHomeProps> = ({ clientId }) => {
   const { query, replace } = useRouter();
-  const [, setAccesToken] = useState('');
+  const [spotifyTokenData, setSpotifyTokenData] = useState<any>({});
   const { authEndpoint, redirectUri, responseType, scope, showDialog } =
     spotifyDefault;
 
-  const handleSpotifyLogin = () => {
+  const openSpotifyAuthGate = () => {
     const authUrl = new URL(authEndpoint);
     authUrl.searchParams.append('client_id', clientId);
     authUrl.searchParams.append('redirect_uri', redirectUri);
@@ -33,29 +42,7 @@ const Home: NextPage<IHomeProps> = ({ clientId, clientSecret }) => {
     window.location.href = authUrl.href;
   };
 
-  const fetchAccesToken = async (code: string) => {
-    // const authOptions = {
-    //   url: 'https://accounts.spotify.com/api/token',
-    //   body: new URLSearchParams({
-    //     code,
-    //     redirect_uri: redirectUri,
-    //     grant_type: 'authorization_code',
-    //   }),
-    //   headers: {
-    //     Authorization:
-    //       'Basic ' +
-    //       new Buffer(clientId + ':' + clientSecret).toString('base64'),
-    //   },
-    //   json: true,
-    // };
-    // const response = await fetch(authOptions.url, {
-    //   method: 'POST',
-    //   headers: {
-    //     ...authOptions.headers,
-    //     'Content-Type': 'application/x-www-form-urlencoded',
-    //   },
-    //   body: authOptions.body,
-    // });
+  const getAccesToken = async (code: string) => {
     const response = await fetch('/api/spotify/getAccessToken', {
       method: 'POST',
       body: JSON.stringify({
@@ -63,9 +50,20 @@ const Home: NextPage<IHomeProps> = ({ clientId, clientSecret }) => {
         spotifyCode: code,
       }),
     });
-    console.log('RESPONSE', response);
-    // setAccesToken(response);
-    // return (await response.json())['access_token']
+    const tokenData = await response.json();
+    setSpotifyTokenData(tokenData);
+  };
+
+  const refreshToken = async () => {
+    const response = await fetch('/api/spotify/getRefreshedToken', {
+      method: 'POST',
+      body: JSON.stringify({
+        redirectUri: redirectUri,
+        refreshToken: spotifyTokenData.refreshToken,
+      }),
+    });
+    const refreshedTokenData = await response.json();
+    setSpotifyTokenData(refreshedTokenData);
   };
 
   useEffect(() => {
@@ -78,7 +76,7 @@ const Home: NextPage<IHomeProps> = ({ clientId, clientSecret }) => {
         actualSpotifyCodeCookie !== spotifyCode
       ) {
         Cookies.set('spotify-code', spotifyCode);
-        fetchAccesToken(spotifyCode);
+        getAccesToken(spotifyCode);
         replace(redirectUri);
       }
     }
@@ -92,10 +90,11 @@ const Home: NextPage<IHomeProps> = ({ clientId, clientSecret }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <div>
+        <HomepageContainer>
+          <button onClick={openSpotifyAuthGate}>Login</button>
+          <button onClick={refreshToken}>Refresh token</button>
           <h1>Spotify</h1>
-        </div>
-        <button onClick={handleSpotifyLogin}>Login</button>
+        </HomepageContainer>
       </main>
     </div>
   );

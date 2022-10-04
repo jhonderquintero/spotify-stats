@@ -1,46 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
-import Head from 'next/head';
-import img from '../../public/assets/images/spotify-home.png';
-import styled from 'styled-components';
-import type { NextPage } from 'next';
+import { NextPage } from 'next';
+import { useRouter } from 'next/router';
+import React, { useEffect, useState } from 'react';
+import { spotifyDefault } from './login';
 
-interface IHomeProps {
+interface ILoginPageProps {
   clientId: string;
   clientSecret: string;
 }
 
-const spotifyDefault = {
-  authEndpoint: 'https://accounts.spotify.com/authorize',
-  redirectUri: 'http://localhost:3000',
-  responseType: 'code',
-  scope: 'user-read-private user-read-email user-read-playback-state',
-  showDialog: 'true',
-};
-
-const HomepageContainer = styled.div`
-  background-image: url(${img.src});
-  width: 100vw;
-  height: 100vh;
-  color: white;
-`;
-
-const Home: NextPage<IHomeProps> = ({ clientId }) => {
+export const App: NextPage<ILoginPageProps> = ({ clientId }) => {
   const { query, replace } = useRouter();
   const [spotifyTokenData, setSpotifyTokenData] = useState<any>({});
-  const { authEndpoint, redirectUri, responseType, scope, showDialog } =
-    spotifyDefault;
-
-  const openSpotifyAuthGate = () => {
-    const authUrl = new URL(authEndpoint);
-    authUrl.searchParams.append('client_id', clientId);
-    authUrl.searchParams.append('redirect_uri', redirectUri);
-    authUrl.searchParams.append('response_type', responseType);
-    authUrl.searchParams.append('scope', scope);
-    authUrl.searchParams.append('show_dialog', showDialog);
-    window.location.href = authUrl.href;
-  };
+  const { redirectUri } = spotifyDefault;
 
   const getAccesToken = async (code: string) => {
     const response = await fetch('/api/spotify/getAccessToken', {
@@ -81,23 +53,7 @@ const Home: NextPage<IHomeProps> = ({ clientId }) => {
       }
     }
   }, [query]);
-
-  return (
-    <div>
-      <Head>
-        <title>Spotify Stats</title>
-        <meta name="description" content="spotify stats web-application" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main>
-        <HomepageContainer>
-          <button onClick={openSpotifyAuthGate}>Login</button>
-          <button onClick={refreshToken}>Refresh token</button>
-          <h1>Spotify</h1>
-        </HomepageContainer>
-      </main>
-    </div>
-  );
+  return <div>Index</div>;
 };
 
 export async function getStaticProps(): Promise<{
@@ -116,4 +72,4 @@ export async function getStaticProps(): Promise<{
   };
 }
 
-export default Home;
+export default App;
